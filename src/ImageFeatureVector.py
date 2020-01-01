@@ -3,7 +3,6 @@ import cv2
 from numpy import shape, array
 from statistics import mean
 from math import floor
-import matplotlib.pyplot as plt
 
 class ImageFeatureVector(object):
     ''' docstring '''
@@ -66,10 +65,7 @@ class ImageFeatureVector(object):
                 self.g[i,...][self.COLS:] = self.g[i,...][:self.COLS][::-1]
                 self.b[i,...][self.COLS:] = self.b[i,...][:self.COLS][::-1]
 
-        # # NOTE: this is wrong to display an image using matplot lib. reverse the
-        # (b, g, r) ->(maps to) (r, g, b)components to display on cv2.imgshow()
-        # self.__show_img__('New Image', cv2.merge((self.b, self.g, self.r)))
-        self.__show_img__('New Image', 'OG Image', cv2.merge((self.r, self.g, self.b)), original_image)
+        cv2.imwrite(self.dest_img_path, cv2.merge((self.b, self.g, self.r)))
 
     def __get_sorted__(self, temp, mode, rev_status):
         new_rgb_vector = []
