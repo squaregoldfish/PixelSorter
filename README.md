@@ -1,7 +1,12 @@
-# NOTE: This is just a progress Report. Cool Stuff with Computer Vision Machine Learning libraries and aglos  will follow
-# [NOTE THIS CODE WAS NEVER OPTIMISED. MY MAIN AIM WAS TO MAKE THE PIXEL SORTER WORK]
+# PixelSorter Fork
 
-## Example Images [TODO LIST FOLLOWS BELLOW AND SOME NOTES WRITTEN TO THE FUTURE ME THIS CODE CAN NEEDS IMPROVEMENTS]
+This is a fork of [Unathi-Skosana/PixelSorter](https://github.com/Unathi-Skosana/PixelSorter).
+
+It fixes up the code for Python3 compatibility, and also fixes the command line
+options to accommodate all the options available in the code (not yet complete).
+
+
+## Example Images
 
 ![Alt text](/sample_results/0.png)
 
@@ -90,33 +95,3 @@
 
 
 ![Alt text](/sample_results/25.png)
-
-
-
-
-# NOTES/ TODOS:
-
-## I realized that sorting the whole image is intuitively not a great idea due
-## to the fact that one would not achieve great results by doing so. However,
-## i will start of by sorting half the image and then take it from there.
-## at this stage i would like to use the sobel method for achieving a different
-## outcome.
-
-### > the comparative_merge_sort.py implemented by unathi is broken. the primary
-###   array is sorted correctly but the secondary array is not sorted accordingly.
-###   a certain cell is duplicated when the sorting is in action. I failed to debug
-###   it,
-### > however, to proceed i am resorting to the sorted built in function. which
-###   uses a hybrid sorting algorithm called Timesort, this algorithm is derived
-###   from merge sort and insertion sort and it works well with different kinds of
-###   data sets.
-
-### > implement or make use of edge detection before sorting ;) cook an art tool
-### > debug and reslove RUNTIMEERRORS for two sorting criteria methods.
-### > fix methods and rethink the design of the code structure.
-### > implement a squre and circle sorter.
-### > then use SIFT or SURF for object detection and sort the objects identified.
-### > also it would be cool to sort people or faces, this is possible through obj detection.
-
-## I FEXED IT DURING MY HECTIC SCHEDULE THE TIMING WAS OFF
-# THEY YET TO COME THOUGH ... 
