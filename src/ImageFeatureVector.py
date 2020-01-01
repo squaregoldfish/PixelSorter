@@ -35,27 +35,34 @@ class ImageFeatureVector(object):
         original_image = self.img.copy()
         original_image[:, :, 0] = self.img[:, :, 2]
         original_image[:, :, 2] = self.img[:, :, 0]
-        self.COLS = self.get_no_cols()/2     # divide by 2 to sort half the image
+        self.COLS = int(self.get_no_cols()/2)     # divide by 2 to sort half the image
         self.ROWS = self.get_no_rows()
         self.b, self.g, self.r = cv2.split(self.img)
-        for i in xrange(shape(self.b)[0]):
-
-            temp = zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS])
-            #if i % 2 != 0:
+        for i in range(shape(self.b)[0]):
+            zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
+            temp = list(zipped[:])
             sorted_data = self.__get_sorted__(temp, rev_status=False)
-            #else:
+
+
+            #if i % 2 != 0:
             #    sorted_data = self.__get_sorted__(temp, rev_status=False)
+            #else:
+            #    sorted_data = self.__get_sorted__(temp, rev_status=True)
+
             self.r[i,...][:self.COLS] = array([r for r,g,b in sorted_data])
             self.g[i,...][:self.COLS] = array([g for r,g,b in sorted_data])
             self.b[i,...][:self.COLS] = array([b for r,g,b in sorted_data])
 
         # do it for the next half
-        for i in xrange(shape(self.b)[0]):
-            temp = zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS])
-            #if i % 2 == 0:
+        for i in range(shape(self.b)[0]):
+            zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
+            temp = list(zipped[:])
             sorted_data = self.__get_sorted__(temp, rev_status=True)
-            #else:
-                #sorted_data = self.__get_sorted__(temp, rev_status=False)
+
+        #    if i % 2 == 0:
+        #        sorted_data = self.__get_sorted__(temp, rev_status=True)
+        #    else:
+        #        sorted_data = self.__get_sorted__(temp, rev_status=False)
             self.r[i,...][self.COLS:] = array([r for r,g,b in sorted_data])
             self.g[i,...][self.COLS:] = array([g for r,g,b in sorted_data])
             self.b[i,...][self.COLS:] = array([b for r,g,b in sorted_data])
@@ -68,16 +75,16 @@ class ImageFeatureVector(object):
     def __get_sorted__(self, temp, mode='L', rev_status=False):
         new_rgb_vector = []
         if mode == 'L':
-            for i in xrange(0, shape(temp)[0]):
+            for i in range(0, shape(temp)[0]):
                 new_rgb_vector.append(self.get_pixel_lum(temp[i][0], temp[i][1], temp[i][2]))
         elif mode == 'C':
-            for i in xrange(0, shape(temp)[0]):
+            for i in range(0, shape(temp)[0]):
                 new_rgb_vector.append(self.get_pixel_chr(temp[i][0], temp[i][1], temp[i][2]))
         elif mode == 'H':
-            for i in xrange(0, shape(temp)[0]):
+            for i in range(0, shape(temp)[0]):
                 new_rgb_vector.append(self.get_pixel_hue(temp[i][0], temp[i][1], temp[i][2]))
         elif mode == 'B':
-            for i in xrange(0, shape(temp)[0]):
+            for i in range(0, shape(temp)[0]):
                 new_rgb_vector.append(self.get_pixel_bri(temp[i][0], temp[i][1], temp[i][2]))
         return [rgb for sort_criteria, rgb in sorted(zip(new_rgb_vector, temp), reverse=rev_status)]
 
