@@ -8,12 +8,18 @@ class PixelSorter(object):
         self.src_img = src_img
         self.dest_img = dest_img
         self.sort_criteria = sort_criteria
-        self.__validate_args__()
+
+        if not self.__validate_args__():
+            exit('USAGE: python PixelSorter.py <source-img-path> <dest-img-path> <sort-criteria>')
 
     def __validate_args__(self):
+
+        valid = True
         ''' docstring '''
-        if not (self.sort_criteria == 'C' or self.sort_criteria == 'L'):
-            raise IOError
+        if not (self.sort_criteria in ['C', 'L', 'H', 'B']):
+            valid = False
+
+        return valid
 
     def pixel_sorter_middleware(self):
         ''' docstring '''

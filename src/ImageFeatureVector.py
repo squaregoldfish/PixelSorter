@@ -1,6 +1,7 @@
 ''' docstring '''
 import cv2
 from numpy import shape, array
+from statistics import mean
 from math import floor
 import matplotlib.pyplot as plt
 
@@ -35,13 +36,13 @@ class ImageFeatureVector(object):
         original_image = self.img.copy()
         original_image[:, :, 0] = self.img[:, :, 2]
         original_image[:, :, 2] = self.img[:, :, 0]
-        self.COLS = int(self.get_no_cols()/2)     # divide by 2 to sort half the image
+        self.COLS = int(self.get_no_cols())     # divide by 2 to sort half the image
         self.ROWS = self.get_no_rows()
         self.b, self.g, self.r = cv2.split(self.img)
         for i in range(shape(self.b)[0]):
             zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
             temp = list(zipped[:])
-            sorted_data = self.__get_sorted__(temp, rev_status=False)
+            sorted_data = self.__get_sorted__(temp, self.sort_criteria, False)
 
 
             #if i % 2 != 0:
@@ -54,25 +55,25 @@ class ImageFeatureVector(object):
             self.b[i,...][:self.COLS] = array([b for r,g,b in sorted_data])
 
         # do it for the next half
-        for i in range(shape(self.b)[0]):
-            zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
-            temp = list(zipped[:])
-            sorted_data = self.__get_sorted__(temp, rev_status=True)
+       # for i in range(shape(self.b)[0]):
+       #     zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
+       #     temp = list(zipped[:])
+       #     sorted_data = self.__get_sorted__(temp, self.sort_criteria, True)
 
         #    if i % 2 == 0:
         #        sorted_data = self.__get_sorted__(temp, rev_status=True)
         #    else:
         #        sorted_data = self.__get_sorted__(temp, rev_status=False)
-            self.r[i,...][self.COLS:] = array([r for r,g,b in sorted_data])
-            self.g[i,...][self.COLS:] = array([g for r,g,b in sorted_data])
-            self.b[i,...][self.COLS:] = array([b for r,g,b in sorted_data])
+        #    self.r[i,...][self.COLS:] = array([r for r,g,b in sorted_data])
+        #    self.g[i,...][self.COLS:] = array([g for r,g,b in sorted_data])
+        #    self.b[i,...][self.COLS:] = array([b for r,g,b in sorted_data])
 
         # # NOTE: this is wrong to display an image using matplot lib. reverse the
         # (b, g, r) ->(maps to) (r, g, b)components to display on cv2.imgshow()
         # self.__show_img__('New Image', cv2.merge((self.b, self.g, self.r)))
         self.__show_img__('New Image', 'OG Image', cv2.merge((self.r, self.g, self.b)), original_image)
 
-    def __get_sorted__(self, temp, mode='L', rev_status=False):
+    def __get_sorted__(self, temp, mode, rev_status):
         new_rgb_vector = []
         if mode == 'L':
             for i in range(0, shape(temp)[0]):
@@ -103,9 +104,11 @@ class ImageFeatureVector(object):
         r /= 256.0; g /= 256.0; b /= 256.0
         mini, maxi = min(r, g, b), max(r, g, b)
         hue = 0.0
-        if maxi == r:    hue = ((g - b) * 60.0)   / (maxi - mini)
-        elif maxi == g:  hue = (2 +(b-r) * 60.0)  / (maxi - mini)
-        elif maxi == b:  hue = (4 + (r-g) * 60.0) / (maxi - mini)
+
+        if mini != maxi:
+            if maxi == r:    hue = ((g - b) * 60.0)   / (maxi - mini)
+            elif maxi == g:  hue = (2 +(b-r) * 60.0)  / (maxi - mini)
+            elif maxi == b:  hue = (4 + (r-g) * 60.0) / (maxi - mini)
 
         if hue > 0: return floor(hue)
         else:       return floor(360 - hue)
@@ -117,9 +120,7 @@ class ImageFeatureVector(object):
         return r*0.3 + g*0.59 + b*0.11
 
     def get_pixel_bri(self, r, g, b):         # brightness
-        # TODO: fix
-        # RuntimeWarning: overflow encountered in ubyte_scalars
-        return (r + g + b)*1.0 /3.0
+        return round(mean([r, g, b]))
 
     def get_no_rows(self):
         return self.img.shape[0]
