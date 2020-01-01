@@ -7,11 +7,12 @@ import matplotlib.pyplot as plt
 
 class ImageFeatureVector(object):
     ''' docstring '''
-    def __init__(self, img_name, dest_img_path, sort_criteria, sort_mode):
+    def __init__(self, img_name, dest_img_path, sort_criteria, sort_mode, reverse):
         self.img_name             = img_name
         self.dest_img_path        = dest_img_path
         self.sort_criteria        = sort_criteria
         self.sort_mode            = sort_mode
+        self.reverse              = reverse
         self.pixel_data           = None
         self.criteria_data        = None
         self.img                  = None
@@ -45,7 +46,7 @@ class ImageFeatureVector(object):
             for i in range(shape(self.b)[0]):
                 zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
                 temp = list(zipped[:])
-                sorted_data = self.__get_sorted__(temp, self.sort_criteria, False)
+                sorted_data = self.__get_sorted__(temp, self.sort_criteria, self.reverse)
 
                 self.r[i,...][:self.COLS] = array([r for r,g,b in sorted_data])
                 self.g[i,...][:self.COLS] = array([g for r,g,b in sorted_data])
@@ -55,7 +56,7 @@ class ImageFeatureVector(object):
             for i in range(shape(self.b)[0]):
                 zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
                 temp = list(zipped[:])
-                sorted_data = self.__get_sorted__(temp, self.sort_criteria, False)
+                sorted_data = self.__get_sorted__(temp, self.sort_criteria, self.reverse)
 
                 self.r[i,...][:self.COLS] = array([r for r,g,b in sorted_data])
                 self.g[i,...][:self.COLS] = array([g for r,g,b in sorted_data])
