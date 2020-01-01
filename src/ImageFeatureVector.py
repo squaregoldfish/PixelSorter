@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 
 class ImageFeatureVector(object):
     ''' docstring '''
-    def __init__(self, img_name, dest_img_path, sort_criteria):
+    def __init__(self, img_name, dest_img_path, sort_criteria, sort_mode):
         self.img_name             = img_name
         self.dest_img_path        = dest_img_path
         self.sort_criteria        = sort_criteria
+        self.sort_mode            = sort_mode
         self.pixel_data           = None
         self.criteria_data        = None
         self.img                  = None
@@ -36,37 +37,33 @@ class ImageFeatureVector(object):
         original_image = self.img.copy()
         original_image[:, :, 0] = self.img[:, :, 2]
         original_image[:, :, 2] = self.img[:, :, 0]
-        self.COLS = int(self.get_no_cols())     # divide by 2 to sort half the image
+        self.COLS = self.get_no_cols()
         self.ROWS = self.get_no_rows()
         self.b, self.g, self.r = cv2.split(self.img)
-        for i in range(shape(self.b)[0]):
-            zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
-            temp = list(zipped[:])
-            sorted_data = self.__get_sorted__(temp, self.sort_criteria, False)
 
+        if self.sort_mode == 'S':
+            for i in range(shape(self.b)[0]):
+                zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
+                temp = list(zipped[:])
+                sorted_data = self.__get_sorted__(temp, self.sort_criteria, False)
 
-            #if i % 2 != 0:
-            #    sorted_data = self.__get_sorted__(temp, rev_status=False)
-            #else:
-            #    sorted_data = self.__get_sorted__(temp, rev_status=True)
+                self.r[i,...][:self.COLS] = array([r for r,g,b in sorted_data])
+                self.g[i,...][:self.COLS] = array([g for r,g,b in sorted_data])
+                self.b[i,...][:self.COLS] = array([b for r,g,b in sorted_data])
+        else:
+            self.COLS = int(self.COLS / 2)
+            for i in range(shape(self.b)[0]):
+                zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
+                temp = list(zipped[:])
+                sorted_data = self.__get_sorted__(temp, self.sort_criteria, False)
 
-            self.r[i,...][:self.COLS] = array([r for r,g,b in sorted_data])
-            self.g[i,...][:self.COLS] = array([g for r,g,b in sorted_data])
-            self.b[i,...][:self.COLS] = array([b for r,g,b in sorted_data])
+                self.r[i,...][:self.COLS] = array([r for r,g,b in sorted_data])
+                self.g[i,...][:self.COLS] = array([g for r,g,b in sorted_data])
+                self.b[i,...][:self.COLS] = array([b for r,g,b in sorted_data])
 
-        # do it for the next half
-       # for i in range(shape(self.b)[0]):
-       #     zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
-       #     temp = list(zipped[:])
-       #     sorted_data = self.__get_sorted__(temp, self.sort_criteria, True)
-
-        #    if i % 2 == 0:
-        #        sorted_data = self.__get_sorted__(temp, rev_status=True)
-        #    else:
-        #        sorted_data = self.__get_sorted__(temp, rev_status=False)
-        #    self.r[i,...][self.COLS:] = array([r for r,g,b in sorted_data])
-        #    self.g[i,...][self.COLS:] = array([g for r,g,b in sorted_data])
-        #    self.b[i,...][self.COLS:] = array([b for r,g,b in sorted_data])
+                self.r[i,...][self.COLS:] = self.r[i,...][:self.COLS][::-1]
+                self.g[i,...][self.COLS:] = self.g[i,...][:self.COLS][::-1]
+                self.b[i,...][self.COLS:] = self.b[i,...][:self.COLS][::-1]
 
         # # NOTE: this is wrong to display an image using matplot lib. reverse the
         # (b, g, r) ->(maps to) (r, g, b)components to display on cv2.imgshow()
