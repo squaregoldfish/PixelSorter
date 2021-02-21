@@ -51,19 +51,25 @@ class ImageFeatureVector(object):
                 self.g[i,...][:self.COLS] = array([g for r,g,b in sorted_data])
                 self.b[i,...][:self.COLS] = array([b for r,g,b in sorted_data])
         else:
-            self.COLS = int(self.COLS / 2)
+            half_cols = int(self.COLS / 2)
             for i in range(shape(self.b)[0]):
-                zipped = list(zip(self.r[i,...][:self.COLS], self.g[i,...][:self.COLS], self.b[i,...][:self.COLS]))
+
+                # Pull out the RGB values for the columns we're using (every other column)
+                zipped = list(zip(self.r[i,...][::2], self.g[i,...][::2], self.b[i,...][::2]))
                 temp = list(zipped[:])
+
+                # Sort the data
                 sorted_data = self.__get_sorted__(temp, self.sort_criteria, self.reverse)
 
-                self.r[i,...][:self.COLS] = array([r for r,g,b in sorted_data])
-                self.g[i,...][:self.COLS] = array([g for r,g,b in sorted_data])
-                self.b[i,...][:self.COLS] = array([b for r,g,b in sorted_data])
+                # Reconstruct the pixels
+                self.r[i,...][:half_cols] = array([r for r,g,b in sorted_data])
+                self.g[i,...][:half_cols] = array([g for r,g,b in sorted_data])
+                self.b[i,...][:half_cols] = array([b for r,g,b in sorted_data])
 
-                self.r[i,...][self.COLS:] = self.r[i,...][:self.COLS][::-1]
-                self.g[i,...][self.COLS:] = self.g[i,...][:self.COLS][::-1]
-                self.b[i,...][self.COLS:] = self.b[i,...][:self.COLS][::-1]
+                # The right hand side is the flip of the left hand side
+                self.r[i,...][half_cols:] = self.r[i,...][:half_cols][::-1]
+                self.g[i,...][half_cols:] = self.g[i,...][:half_cols][::-1]
+                self.b[i,...][half_cols:] = self.b[i,...][:half_cols][::-1]
 
         cv2.imwrite(self.dest_img_path, cv2.merge((self.b, self.g, self.r)))
 
