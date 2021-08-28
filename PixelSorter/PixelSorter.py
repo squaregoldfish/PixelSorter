@@ -1,5 +1,5 @@
 ''' docstring '''
-from ImageFeatureVector import ImageFeatureVector as IFV
+from .ImageFeatureVector import ImageFeatureVector as IFV
 from sys import (argv, exit)
 
 class PixelSorter(object):
