@@ -1,5 +1,5 @@
 """ docstring """
-from ImageFeatureVector import ImageFeatureVector
+from .ImageFeatureVector import ImageFeatureVector
 from sys import (argv, exit)
 
 
