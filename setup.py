@@ -7,5 +7,6 @@ setup(name='PixelSorter',
       author='Unathi-Skosana, Steve Jones',
       author_email='steve@squaregoldfish.co.uk',
       license='MIT',
+      install_requires=['opencv-python', 'numpy'],
       packages=['PixelSorter'],
       zip_safe=False)
