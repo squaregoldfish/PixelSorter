@@ -1,6 +1,6 @@
 """ docstring """
 import cv2
-from numpy import shape, array
+import numpy as np
 from statistics import mean
 from math import floor
 
@@ -43,16 +43,16 @@ def get_pixel_bri(r, g, b):         # brightness
 def __get_sorted__(temp, mode, rev_status):
     new_rgb_vector = []
     if mode == 'L':
-        for i in range(0, shape(temp)[0]):
+        for i in range(0, np.shape(temp)[0]):
             new_rgb_vector.append(get_pixel_lum(temp[i][0], temp[i][1], temp[i][2]))
     elif mode == 'C':
-        for i in range(0, shape(temp)[0]):
+        for i in range(0, np.shape(temp)[0]):
             new_rgb_vector.append(get_pixel_chr(temp[i][0], temp[i][1], temp[i][2]))
     elif mode == 'H':
-        for i in range(0, shape(temp)[0]):
+        for i in range(0, np.shape(temp)[0]):
             new_rgb_vector.append(get_pixel_hue(temp[i][0], temp[i][1], temp[i][2]))
     elif mode == 'B':
-        for i in range(0, shape(temp)[0]):
+        for i in range(0, np.shape(temp)[0]):
             new_rgb_vector.append(get_pixel_bri(temp[i][0], temp[i][1], temp[i][2]))
     return [rgb for sort_criteria, rgb in sorted(zip(new_rgb_vector, temp), reverse=rev_status)]
 
@@ -87,6 +87,13 @@ class ImageFeatureVector(object):
         """
         self.img = cv2.imread(self.img_name)
 
+        # Make sure we have an even number of rows and cols
+        if np.shape(self.img)[0] % 2 == 1:
+            self.img = np.delete(self.img, 0, axis=0)
+
+        if np.shape(self.img)[1] % 2 == 1:
+            self.img = np.delete(self.img, 0, axis=1)
+
         # If we're doing Vertical, rotate the image by 90 degrees
         if self.direction == 'V':
             self.img = cv2.rotate(self.img, cv2.ROTATE_90_CLOCKWISE)
@@ -99,17 +106,17 @@ class ImageFeatureVector(object):
         self.b, self.g, self.r = cv2.split(self.img)
 
         if self.sort_mode == 'S':
-            for i in range(shape(self.b)[0]):
+            for i in range(np.shape(self.b)[0]):
                 zipped = list(zip(self.r[i, ...][:self.COLS], self.g[i, ...][:self.COLS], self.b[i, ...][:self.COLS]))
                 temp = list(zipped[:])
                 sorted_data = __get_sorted__(temp, self.sort_criteria, self.reverse)
 
-                self.r[i, ...][:self.COLS] = array([r for r, g, b in sorted_data])
-                self.g[i, ...][:self.COLS] = array([g for r, g, b in sorted_data])
-                self.b[i, ...][:self.COLS] = array([b for r, g, b in sorted_data])
+                self.r[i, ...][:self.COLS] = np.array([r for r, g, b in sorted_data])
+                self.g[i, ...][:self.COLS] = np.array([g for r, g, b in sorted_data])
+                self.b[i, ...][:self.COLS] = np.array([b for r, g, b in sorted_data])
         else:
             half_cols = int(self.COLS / 2)
-            for i in range(shape(self.b)[0]):
+            for i in range(np.shape(self.b)[0]):
 
                 # Pull out the RGB values for the columns we're using (every other column)
                 zipped = list(zip(self.r[i, ...][::2], self.g[i, ...][::2], self.b[i, ...][::2]))
@@ -119,9 +126,9 @@ class ImageFeatureVector(object):
                 sorted_data = __get_sorted__(temp, self.sort_criteria, self.reverse)
 
                 # Reconstruct the pixels
-                self.r[i, ...][:half_cols] = array([r for r, g, b in sorted_data])
-                self.g[i, ...][:half_cols] = array([g for r, g, b in sorted_data])
-                self.b[i, ...][:half_cols] = array([b for r, g, b in sorted_data])
+                self.r[i, ...][:half_cols] = np.array([r for r, g, b in sorted_data])
+                self.g[i, ...][:half_cols] = np.array([g for r, g, b in sorted_data])
+                self.b[i, ...][:half_cols] = np.array([b for r, g, b in sorted_data])
 
                 # The right hand side is the flip of the left hand side
                 self.r[i, ...][half_cols:] = self.r[i, ...][:half_cols][::-1]
