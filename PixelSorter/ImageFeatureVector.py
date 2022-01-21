@@ -141,7 +141,7 @@ class ImageFeatureVector(object):
         if self.direction == 'V':
             final_image = cv2.rotate(final_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-        cv2.imwrite(self.dest_img_path, final_image)
+        cv2.imwrite(self.dest_img_path, final_image, [cv2.IMWRITE_PNG_COMPRESSION, 9])
 
     def get_no_rows(self):
         return self.img.shape[0]
