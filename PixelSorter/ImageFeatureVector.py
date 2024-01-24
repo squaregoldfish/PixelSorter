@@ -105,6 +105,7 @@ class ImageFeatureVector(object):
         self.ROWS = self.get_no_rows()
         self.b, self.g, self.r = cv2.split(self.img)
 
+
         if self.sort_mode == 'S':
             for i in range(np.shape(self.b)[0]):
                 zipped = list(zip(self.r[i, ...][:self.COLS], self.g[i, ...][:self.COLS], self.b[i, ...][:self.COLS]))
@@ -114,6 +115,7 @@ class ImageFeatureVector(object):
                 self.r[i, ...][:self.COLS] = np.array([r for r, g, b in sorted_data])
                 self.g[i, ...][:self.COLS] = np.array([g for r, g, b in sorted_data])
                 self.b[i, ...][:self.COLS] = np.array([b for r, g, b in sorted_data])
+
         else:
             half_cols = int(self.COLS / 2)
             for i in range(np.shape(self.b)[0]):
@@ -135,9 +137,9 @@ class ImageFeatureVector(object):
                 self.g[i, ...][half_cols:] = self.g[i, ...][:half_cols][::-1]
                 self.b[i, ...][half_cols:] = self.b[i, ...][:half_cols][::-1]
 
-        # If we're doing Vertical, rotate the image back
         final_image = cv2.merge((self.b, self.g, self.r))
 
+        # If we're doing Vertical, rotate the image back
         if self.direction == 'V':
             final_image = cv2.rotate(final_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
