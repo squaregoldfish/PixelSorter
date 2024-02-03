@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 from statistics import mean
 from math import floor
+from multiprocessing import shared_memory, Pool
+from itertools import repeat
 
 
 def get_pixel_hue(r, g, b):
@@ -57,6 +59,62 @@ def __get_sorted__(temp, mode, rev_status):
     return [rgb for sort_criteria, rgb in sorted(zip(new_rgb_vector, temp), reverse=rev_status)]
 
 
+def process_row_smode(i, shape, cols, sort_criteria, reverse):
+    b_shm = shared_memory.SharedMemory(name='b_shm')
+    b = np.ndarray(shape, dtype=np.uint8, buffer=b_shm.buf)
+    g_shm = shared_memory.SharedMemory(name='g_shm')
+    g = np.ndarray(shape, dtype=np.uint8, buffer=g_shm.buf)
+    r_shm = shared_memory.SharedMemory(name='r_shm')
+    r = np.ndarray(shape, dtype=np.uint8, buffer=r_shm.buf)
+
+    zipped = list(zip(r[i, ...][:cols], g[i, ...][:cols], b[i, ...][:cols]))
+    temp = list(zipped[:])
+    sorted_data = __get_sorted__(temp, sort_criteria, reverse)
+
+    r[i, ...][:cols] = np.array([r for r, g, b in sorted_data])
+    g[i, ...][:cols] = np.array([g for r, g, b in sorted_data])
+    b[i, ...][:cols] = np.array([b for r, g, b in sorted_data])
+
+    del b
+    b_shm.close()
+    del g
+    g_shm.close()
+    del r
+    r_shm.close()
+
+def process_row_mmode(i, shape, half_cols, sort_criteria, reverse):
+    b_shm = shared_memory.SharedMemory(name='b_shm')
+    b = np.ndarray(shape, dtype=np.uint8, buffer=b_shm.buf)
+    g_shm = shared_memory.SharedMemory(name='g_shm')
+    g = np.ndarray(shape, dtype=np.uint8, buffer=g_shm.buf)
+    r_shm = shared_memory.SharedMemory(name='r_shm')
+    r = np.ndarray(shape, dtype=np.uint8, buffer=r_shm.buf)
+
+    # Pull out the RGB values for the columns we're using (every other column)
+    zipped = list(zip(r[i, ...][::2], g[i, ...][::2], b[i, ...][::2]))
+    temp = list(zipped[:])
+
+    # Sort the data
+    sorted_data = __get_sorted__(temp, sort_criteria, reverse)
+
+    # Reconstruct the pixels
+    r[i, ...][:half_cols] = np.array([r for r, g, b in sorted_data])
+    g[i, ...][:half_cols] = np.array([g for r, g, b in sorted_data])
+    b[i, ...][:half_cols] = np.array([b for r, g, b in sorted_data])
+
+    # The right hand side is the flip of the left hand side
+    r[i, ...][half_cols:] = r[i, ...][:half_cols][::-1]
+    g[i, ...][half_cols:] = g[i, ...][:half_cols][::-1]
+    b[i, ...][half_cols:] = b[i, ...][:half_cols][::-1]
+
+    del b
+    b_shm.close()
+    del g
+    g_shm.close()
+    del r
+    r_shm.close()
+
+
 class ImageFeatureVector(object):
     """ docstring """
     def __init__(self, img_name, dest_img_path, sort_criteria, sort_mode, direction, reverse):
@@ -71,9 +129,17 @@ class ImageFeatureVector(object):
         self.img = None
         self.COLS = -1
         self.ROWS = -1
-        self.r = []
-        self.g = []
-        self.b = []
+        
+        # These will be shared memory arrays
+        self.r = None
+        self.r_shm = None
+        self.g = None
+        self.g_shm = None
+        self.b = None
+        self.b_shm = None
+
+        self.channel_shape = None
+
         self.__process_img__()
 
     def get_color_channel(self):
@@ -103,47 +169,50 @@ class ImageFeatureVector(object):
         original_image[:, :, 2] = self.img[:, :, 0]
         self.COLS = self.get_no_cols()
         self.ROWS = self.get_no_rows()
-        self.b, self.g, self.r = cv2.split(self.img)
+        b, g, r = cv2.split(self.img)
+        
+        try:
+            self.b_shm = shared_memory.SharedMemory(name='b_shm', create=True, size=b.nbytes)
+            self.b = np.ndarray(b.shape, dtype=b.dtype, buffer=self.b_shm.buf)
+            self.b[:] = b[:]
+            self.channel_shape = b.shape
 
+            self.g_shm = shared_memory.SharedMemory(name='g_shm', create=True, size=g.nbytes)
+            self.g = np.ndarray(g.shape, dtype=g.dtype, buffer=self.g_shm.buf)
+            self.g[:] = g[:]
 
-        if self.sort_mode == 'S':
-            for i in range(np.shape(self.b)[0]):
-                zipped = list(zip(self.r[i, ...][:self.COLS], self.g[i, ...][:self.COLS], self.b[i, ...][:self.COLS]))
-                temp = list(zipped[:])
-                sorted_data = __get_sorted__(temp, self.sort_criteria, self.reverse)
+            self.r_shm = shared_memory.SharedMemory(name='r_shm', create=True, size=r.nbytes)
+            self.r = np.ndarray(r.shape, dtype=r.dtype, buffer=self.r_shm.buf)
+            self.r[:] = r[:]
 
-                self.r[i, ...][:self.COLS] = np.array([r for r, g, b in sorted_data])
-                self.g[i, ...][:self.COLS] = np.array([g for r, g, b in sorted_data])
-                self.b[i, ...][:self.COLS] = np.array([b for r, g, b in sorted_data])
+            if self.sort_mode == 'S':
+                with Pool() as pool:
+                    pool.starmap(process_row_smode,
+                        zip(range(np.shape(self.b)[0]), repeat(self.channel_shape), repeat(self.COLS), repeat(self.sort_criteria), repeat(self.reverse)))
+            else:
+                half_cols = int(self.COLS / 2)
+                with Pool() as pool:
+                    pool.starmap(process_row_mmode,
+                        zip(range(np.shape(self.b)[0]), repeat(self.channel_shape), repeat(half_cols), repeat(self.sort_criteria), repeat(self.reverse)))
 
-        else:
-            half_cols = int(self.COLS / 2)
-            for i in range(np.shape(self.b)[0]):
+            final_image = cv2.merge((self.b, self.g, self.r))
 
-                # Pull out the RGB values for the columns we're using (every other column)
-                zipped = list(zip(self.r[i, ...][::2], self.g[i, ...][::2], self.b[i, ...][::2]))
-                temp = list(zipped[:])
+            # If we're doing Vertical, rotate the image back
+            if self.direction == 'V':
+                final_image = cv2.rotate(final_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-                # Sort the data
-                sorted_data = __get_sorted__(temp, self.sort_criteria, self.reverse)
-
-                # Reconstruct the pixels
-                self.r[i, ...][:half_cols] = np.array([r for r, g, b in sorted_data])
-                self.g[i, ...][:half_cols] = np.array([g for r, g, b in sorted_data])
-                self.b[i, ...][:half_cols] = np.array([b for r, g, b in sorted_data])
-
-                # The right hand side is the flip of the left hand side
-                self.r[i, ...][half_cols:] = self.r[i, ...][:half_cols][::-1]
-                self.g[i, ...][half_cols:] = self.g[i, ...][:half_cols][::-1]
-                self.b[i, ...][half_cols:] = self.b[i, ...][:half_cols][::-1]
-
-        final_image = cv2.merge((self.b, self.g, self.r))
-
-        # If we're doing Vertical, rotate the image back
-        if self.direction == 'V':
-            final_image = cv2.rotate(final_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
-
-        cv2.imwrite(self.dest_img_path, final_image, [cv2.IMWRITE_PNG_COMPRESSION, 9])
+            cv2.imwrite(self.dest_img_path, final_image, [cv2.IMWRITE_PNG_COMPRESSION, 9])
+        finally:
+            # Release shared memory
+            del self.b
+            self.b_shm.close()
+            self.b_shm.unlink()
+            del self.g
+            self.g_shm.close()
+            self.g_shm.unlink()
+            del self.r
+            self.r_shm.close()
+            self.r_shm.unlink()
 
     def get_no_rows(self):
         return self.img.shape[0]

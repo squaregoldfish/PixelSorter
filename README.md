@@ -7,8 +7,7 @@ This is a fork of [Unathi-Skosana/PixelSorter](https://github.com/Unathi-Skosana
 ### Complete
 - Fixed for Python 3 compatibility
 - Output to file instead of window
-
-### Under development
 - Command line options for luminance, chroma, hue and brightness
 - Command line options for simple or mirror sort
 - Command line option to reverse sort
+- Multiprocessing
