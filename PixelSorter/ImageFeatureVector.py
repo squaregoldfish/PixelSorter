@@ -201,7 +201,7 @@ class ImageFeatureVector(object):
             if self.direction == 'V':
                 final_image = cv2.rotate(final_image, cv2.ROTATE_90_COUNTERCLOCKWISE)
 
-            cv2.imwrite(self.dest_img_path, final_image, [cv2.IMWRITE_PNG_COMPRESSION, 9])
+            cv2.imwrite(self.dest_img_path, final_image, [cv2.IMWRITE_JPEG_QUALITY, 90])
         finally:
             # Release shared memory
             del self.b
